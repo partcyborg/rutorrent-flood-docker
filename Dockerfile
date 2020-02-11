@@ -125,7 +125,6 @@ git clone https://github.com/orobardet/rutorrent-force_save_session force_save_s
 git clone https://github.com/AceP1983/ruTorrent-plugins  && \
 mv ruTorrent-plugins/* . && \
 rm -rf ruTorrent-plugins && \
-
 git clone https://github.com/nelu/rutorrent-thirdparty-plugins.git && \
 mv rutorrent-thirdparty-plugins/* . && \
 rm -rf rutorrent-thirdparty-plugins && \
