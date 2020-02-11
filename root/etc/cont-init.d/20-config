@@ -59,8 +59,10 @@ fi
 cp /config/php/php.ini /etc/php7/php.ini
 
 # create symlink for webui files
-[[ ! -e /var/www/localhost/rutorrent ]] && ln -s \
-/usr/share/webapps/rutorrent /var/www/localhost/rutorrent
+if [[ ! -e /var/www/localhost/rutorrent ]]; then
+   mkdir -p /var/www/localhost
+   ln -s /usr/share/webapps/rutorrent /var/www/localhost/rutorrent
+fi
 
 # delete lock file if exists
 [[ -e /config/rtorrent/rtorrent_sess/rtorrent.lock ]] && \

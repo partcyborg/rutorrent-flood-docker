@@ -1,184 +1,110 @@
-#MAINTAINER partcyborg
-FROM alpine as gccbuilder
-ARG GCC_VERSION=7.4.0
-ENV GCC_VERSION=$GCC_VERSION
 
-RUN apk add --quiet --no-cache \
-            build-base \
-            dejagnu \
-            isl-dev \
-            make \
-            mpc1-dev \
-            mpfr-dev \
-            texinfo \
-            zlib-dev
-RUN wget -q https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz && \
-    tar -xzf gcc-${GCC_VERSION}.tar.gz && \
-    rm -f gcc-${GCC_VERSION}.tar.gz
-
-WORKDIR /gcc-${GCC_VERSION}
-
-RUN ./configure \
-        --prefix=/usr/local \
-        --build=$(uname -m)-alpine-linux-musl \
-        --host=$(uname -m)-alpine-linux-musl \
-        --target=$(uname -m)-alpine-linux-musl \
-        --with-pkgversion="Alpine ${GCC_VERSION}" \
-        --enable-checking=release \
-        --disable-fixed-point \
-        --disable-libmpx \
-        --disable-libmudflap \
-        --disable-libsanitizer \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-multilib \
-        --disable-nls \
-        --disable-symvers \
-        --disable-werror \
-        --enable-__cxa_atexit \
-        --enable-default-pie \
-        --enable-languages=c,c++ \
-        --enable-shared \
-        --enable-threads \
-        --enable-tls \
-        --with-linker-hash-style=gnu \
-        --with-system-zlib
-RUN make --silent -j $(nproc)
-RUN make --silent -j $(nproc) install-strip
-RUN gcc -v
-
-
-
-FROM lsiobase/alpine:3.10 as runtime-image
+FROM lsiobase/ubuntu:bionic
 
 # set version label
 ARG BUILD_DATE
 ARG VERSION
-ARG BUILD_CORES
 LABEL build_version="Version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 
 # package version
 ARG MEDIAINF_VER="19.07"
-ARG CURL_VER="6.65.3"
 ARG GEOIP_VER="1.1.1"
-ARG RTORRENT_VER="0.9.8"
-ARG LIBTORRENT_VER="v0.13.8"
 
 # set env
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
-ENV LD_LIBRARY_PATH=/usr/local/lib
 ENV CONTEXT_PATH=/
 ENV CREATE_SUBDIR_BY_TRACKERS="no"
-ENV OPENSSL_VER=1.0.2o
-ENV DISABLE_PERMS_CHANGE="no"
 
+LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="sparklyballs, aptalca"
 
-RUN NB_CORES=${BUILD_CORES-`getconf _NPROCESSORS_CONF`} && \
- apk add --no-cache \
-	bash-completion \
-        ca-certificates \
-        fcgi \
-        ffmpeg \
-        geoip \
-        geoip-dev \
-        gzip \
-        logrotate \
-        nginx \
-        dtach \
-        tar \
-        unrar \
-        unzip \
-        sox \
-        wget \
-        irssi \
-        irssi-perl \
-        zlib \
-        zlib-dev \
-        libxml2-dev \
-        perl-archive-zip \
-        perl-net-ssleay \
-        perl-digest-sha1 \
-        git \
-        binutils \
-        findutils \
-        zip \
-        php7 \
-        php7-cgi \
-        php7-fpm \
-        php7-json  \
-        php7-mbstring \
-        php7-sockets \
-        php7-pear \
-        php7-opcache \
-        php7-apcu \
-        php7-ctype \
-        php7-dev \
-        php7-phar \
-		  php7-zip \
-        python \
-        python3 && \
-# install build packages
- apk add --no-cache --virtual=build-dependencies \
-        autoconf \
-        automake \
-        perl-app-cpanminus \
-        cppunit-dev \
-        perl-dev \
-        file \
-        git \
-        libtool \
-        libcrypto1.1 \
-        make \
-        ncurses-dev \
-        libtool \
-        subversion \
-        linux-headers \
-        libffi-dev \
-        python3-dev \
-        mpfr \
-        go \
-        patch \
-        dejagnu \
-        isl-dev \
-        make \
-        mpc1-dev \
-        mpfr-dev \
-        texinfo \
-        zlib-dev \
-        binutils \
-        file \
-        make \
-        fortify-headers \
-        musl-dev 
-
-COPY --from=gccbuilder /usr/local/ /usr/
-
-RUN ln -sf /usr/local/bin/gcc /usr/bin/cc && \
-ln -sf /usr/local/bin/g++ /usr/bin/c++ && \
-cd /tmp && \
-rm -rf openssl-fips-${OPENSSL_FIPS_VER} && \
-wget -qO- https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz | tar xz && \
-cd openssl-$OPENSSL_VER && \
-perl ./Configure linux-x86_64 --prefix=/usr \
-	--libdir=lib \
-	--openssldir=/etc/ssl \
-	shared zlib enable-md2  \
-	-DOPENSSL_NO_BUF_FREELISTS \
-	-Wa,--noexecstack enable-ssl2 && \
-make && \
-make install_sw && \
-cd /tmp && \
-rm -rf openssl-${OPENSSL_VER}
-
-# compile curl to fix ssl for rtorrent
-RUN cd /tmp && \
-mkdir curl && \
-cd curl && \
-wget -qO- https://curl.haxx.se/download/curl-${CURL_VER}.tar.gz | tar xz --strip 1 && \
-./configure --with-ssl && make -j ${NB_CORES} && make install && \
-ldconfig /usr/bin && ldconfig /usr/lib && \
+RUN export NB_CORES=4 && \
+ export DEBIAN_FRONTEND=noninteractive && \
+ echo "**** install packages ****" && \
+ apt-get update && \
+ apt-get install -y \
+   locales \
+	p7zip \
+	unrar \
+	unzip \
+	libssl1.0.0 \
+	openssl \
+	dtach \
+	ffmpeg \
+	wget \
+	geoip-bin \
+	geoip-database \
+	logrotate \
+	ca-certificates \
+	libfcgi-bin \
+	libarchive-zip-perl \
+	zlib1g \
+	libxml2 \
+   php7.2 \
+   php7.2-cgi \
+   php7.2-fpm \
+   php7.2-json  \
+   php7.2-mbstring \
+   php7.2-sockets \
+   php-pear \
+   php7.2-opcache \
+   php7.2-apcu \
+   php7.2-ctype \
+   php7.2-dev \
+   php7.2-fpm \
+   php7.2-phar \
+   php7.2-zip \
+   rar \
+   nginx-full \
+   libsox3 \
+   sox \
+   zip \
+   openssl1.0 \
+   nodejs \
+   cksfv \
+	irssi && \
+ echo "**** install build deps ****" && \
+ apt-get install -y \
+   libsox-dev \
+   cpanminus \
+   autoconf \
+   automake \
+   git \
+   libtool \
+   gcc-7 \
+   g++-7 \
+	zlib1g-dev \
+	libxml2-dev \
+	build-essential \
+	libffi-dev \
+	libarchive-zip-perl \
+	cpanminus \
+   libxml-libxml-perl \
+   libdigest-sha-perl \
+   libjson-perl \
+   libjson-xs-perl \
+   zlib1g-dev \
+   dejagnu \
+   libmpc3 \
+   libmpc-dev \
+   libisl19 \
+   libisl-dev \
+   libffi6 \
+   libffi-dev \
+   libmpfr-dev \
+   texinfo \
+   golang \
+   subversion \
+   libncurses5-dev \
+   nodejs-dev \
+   python3-pip \
+   ncurses-term \
+   npm \
+   wget && \
+ echo "**** install perl modules ****" && \
+	cpanm HTML::Entities Net::SSLeay && \
 # install webui
- mkdir -p \
+mkdir -p \
         /usr/share/webapps/rutorrent \
         /defaults/rutorrent-conf && \
  git clone https://github.com/Novik/ruTorrent.git \
@@ -188,11 +114,10 @@ ldconfig /usr/bin && ldconfig /usr/lib && \
  rm -rf \
         /defaults/rutorrent-conf/users && \
  pip3 install CfScrape \
-              cloudscraper
-
+              cloudscraper && \
 # install webui extras
 # QuickBox Theme
-RUN git clone https://github.com/QuickBox/club-QuickBox /usr/share/webapps/rutorrent/plugins/theme/themes/club-QuickBox && \
+git clone https://github.com/QuickBox/club-QuickBox /usr/share/webapps/rutorrent/plugins/theme/themes/club-QuickBox && \
 git clone https://github.com/Phlooo/ruTorrent-MaterialDesign /usr/share/webapps/rutorrent/plugins/theme/themes/MaterialDesign && \
 # ruTorrent plugins
 cd /usr/share/webapps/rutorrent/plugins/ && \
@@ -200,7 +125,7 @@ git clone https://github.com/orobardet/rutorrent-force_save_session force_save_s
 git clone https://github.com/AceP1983/ruTorrent-plugins  && \
 mv ruTorrent-plugins/* . && \
 rm -rf ruTorrent-plugins && \
-apk add --no-cache cksfv && \
+
 git clone https://github.com/nelu/rutorrent-thirdparty-plugins.git && \
 mv rutorrent-thirdparty-plugins/* . && \
 rm -rf rutorrent-thirdparty-plugins && \
@@ -213,7 +138,6 @@ cd plowshare/ && \
 make install && \
 cd .. && \
 rm -rf plowshare* && \
-apk add --no-cache unzip bzip2 && \
 cd /usr/share/webapps/rutorrent/plugins/ && \
 git clone https://github.com/Gyran/rutorrent-pausewebui pausewebui && \
 git clone https://github.com/Gyran/rutorrent-ratiocolor ratiocolor && \
@@ -221,37 +145,16 @@ sed -i 's/changeWhat = "cell-background";/changeWhat = "font";/g' /usr/share/web
 git clone https://github.com/Gyran/rutorrent-instantsearch instantsearch && \
 git clone https://github.com/xombiemp/rutorrentMobile && \
 git clone https://github.com/dioltas/AddZip && \
-# install autodl-irssi perl modules
- perl -MCPAN -e 'my $c = "CPAN::HandleConfig"; $c->load(doit => 1, autoconfig => 1); $c->edit(prerequisites_policy => "follow"); $c->edit(build_requires_install_policy => "yes"); $c->commit' && \
-cpanm -n HTML::Entities XML::LibXML JSON JSON::XS Net::SSLeay && \
-# compile xmlrpc-c
+perl -MCPAN -e 'my $c = "CPAN::HandleConfig"; $c->load(doit => 1, autoconfig => 1); $c->edit(prerequisites_policy => "follow"); $c->edit(build_requires_install_policy => "yes"); $c->commit' && \
 cd /tmp && \
-svn checkout http://svn.code.sf.net/p/xmlrpc-c/code/stable xmlrpc-c && \
-cd /tmp/xmlrpc-c && \
-./configure --with-libwww-ssl --disable-wininet-client --disable-curl-client --disable-libwww-client --disable-abyss-server --disable-cgi-server && make -j ${NB_CORES} && make install && \
-cd /tmp && \
-rm -rf xmlrpc-c
-
-# compile libtorrent
-#if [ "$RTORRENT_VER" == "v0.9.4" ] || [ "$RTORRENT_VER" == "v0.9.6" ]; then apk add -X http://dl-cdn.alpinelinux.org/alpine/v3.6/main -U cppunit-dev==1.13.2-r1 cppunit==1.13.2-r1; fi && \
-#echo "DEBUG: RTORRENT/LIBTORRENT VERSIONS ARE: $RTORRENT_VER/$LIBTORRENT_VER" && \
-#cd /tmp && \
-#mkdir libtorrent && \
-#cd libtorrent && \
-#wget -qO- https://github.com/rakshasa/libtorrent/archive/${LIBTORRENT_VER}.tar.gz | tar xz --strip 1 && \
-#./autogen.sh && ./configure && make -j ${NB_CORES} && make install && \
-
-# compile rtorrent-ps
-RUN cd /tmp && \
 git clone https://github.com/pyroscope/rtorrent-ps && \
 cd rtorrent-ps && \
-bash -c "INSTALL_ROOT=/usr/local PACKAGE_ROOT=/usr/local/rtorrent BIN_DIR=/usr/local/bin ./build.sh all" && \
+sed -i 's!INSTALL_ROOT/.local!INSTALL_ROOT!' build.sh && \
+INSTALL_ROOT=/usr/local PACKAGE_ROOT=/usr/local/rtorrent BIN_DIR=/usr/local/bin ./build.sh all && \
 cd /tmp && \
-rm -rf rtorrent-ps
-
-
+rm -rf rtorrent-ps && \
 # compile mediainfo packages
-RUN cd /tmp && \
+cd /tmp && \
 curl -o /tmp/libmediainfo.tar.gz -L \
         "http://mediaarea.net/download/binary/libmediainfo0/${MEDIAINF_VER}/MediaInfo_DLL_${MEDIAINF_VER}_GNU_FromSource.tar.gz" && \
 curl -o /tmp/mediainfo.tar.gz -L \
@@ -276,31 +179,44 @@ cd /tmp/mediainfo/MediaInfo/Project/GNU/CLI && \
 cd /tmp && \
 rm -rf mediainfo && \
 # compile and install rtelegram
-GOPATH=/usr go get -u github.com/pyed/rtelegram 
-#if [ "$RTORRENT_VER" == "v0.9.4" ] || [ "$RTORRENT_VER" == "v0.9.6" ]; then apk del -X http://dl-cdn.alpinelinux.org/alpine/v3.6/main cppunit-dev; fi && \
+GOPATH=/usr go get -u github.com/pyed/rtelegram && \
+# Install flood
+mkdir /usr/flood && \
+cd /usr/flood && \
+git clone https://github.com/jfurrow/flood . && \
+cp config.template.js config.js && \
+npm install && \
+npm cache clean --force && \
+npm run build && \
+#npm prune --production && \
+rm config.js && \
+ln -s /bin/tar /usr/bin/tar && \
+ln -s /bin/bzip2 /usr/bin/bzip2 && \
+ln -s /usr/local/bin/mediainfo /usr/bin/mediainfo && \
+apt-get purge -y \
+   libsox-dev \
+   cpanminus \
+	zlib1g-dev \
+	libxml2-dev \
+	build-essential \
+	libffi-dev \
+   zlib1g-dev \
+   libmpc-dev \
+   libisl-dev \
+   libffi-dev \
+   libmpfr-dev \
+   golang \
+   subversion && \
+apt-get --purge autoremove -y && \
+apt-get clean && \
+rm -rf \
+	/tmp/* \
+	/var/lib/apt/lists/* \
+	/var/tmp/*
 
-# install flood webui
-RUN  apk add --no-cache \
-       python \
-       nodejs \
-       nodejs-npm && \
-     apk add --no-cache --virtual=build-dependencies \
-       build-base && \
-     mkdir /usr/flood && \
-     cd /usr/flood && \
-     git clone https://github.com/jfurrow/flood . && \
-     cp config.template.js config.js && \
-     npm install && \
-     npm cache clean --force && \
-     npm run build && \
-     npm prune --production && \
-     rm config.js && \
-     ln -s /usr/local/bin/mediainfo /usr/bin/mediainfo
-
-# add local files
+# add local files
 COPY root/ /
-COPY VERSION /
 
-# ports and volumes
+# ports and volumes
 EXPOSE 443 51415 3000
 VOLUME /config /downloads

@@ -4,7 +4,7 @@
 #        --home=/config/.irssi
 #
 #sleep 1s
-if [ -f "/detach_sess/.irssi" ]; then
+if [ -e "/detach_sess/.irssi" ]; then
 rm -f /detach_sess/.irssi || true
 sleep 1s
 fi
