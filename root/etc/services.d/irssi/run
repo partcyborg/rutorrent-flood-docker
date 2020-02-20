@@ -1,14 +1,22 @@
 #!/usr/bin/with-contenv bash
-#screen -D -m -S \
-#        irssi s6-setuidgid abc /usr/bin/irssi \
-#        --home=/config/.irssi
-#
-#sleep 1s
-if [ -e "/detach_sess/.irssi" ]; then
-rm -f /detach_sess/.irssi || true
-sleep 1s
+# vim: set ft=bash:
+
+PIDFILE=/run/irssi.pid
+if [[ -f $PIDFILE ]]; then
+   PID=$(cat $PIDFILE)
+   [[ -n "$PID" && -d /proc/${PID} ]] && exit 0
 fi
 
-HOME=/config;dtach -n /detach_sess/.irssi s6-setuidgid abc /usr/bin/irssi --home=/config/.irssi 1>/dev/null
+if [ -e "/detach_sess/.irssi" ]; then
+   rm -f /detach_sess/.irssi || true
+fi
+
+HOME=/config \
+   dtach -N /detach_sess/.irssi \
+   s6-setuidgid abc /usr/bin/irssi \
+   --home=/config/.irssi &
+PID="$!"
+echo "irssi started with pid $PID"
+echo $PID > $PIDFILE
 
 sleep 1s
