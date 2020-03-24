@@ -15,7 +15,7 @@ HOME=/config \
    dtach -N /detach_sess/.irssi \
    s6-setuidgid abc /usr/bin/irssi \
    --home=/config/.irssi &
-PID="$!"
+PID=$!
 echo "irssi started with pid $PID"
 echo $PID > $PIDFILE
 
