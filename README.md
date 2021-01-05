@@ -2,18 +2,10 @@
 
 A repository for creating a docker container including rtorrent with rutorrent and flood interfaces.
 
-[![](https://images.microbadger.com/badges/version/romancin/rutorrent-flood.svg)](https://microbadger.com/images/romancin/rutorrent-flood "Docker image version")
-[![](https://images.microbadger.com/badges/image/romancin/rutorrent-flood.svg)](https://microbadger.com/images/romancin/rutorrent-flood "Docker image size")
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=X2CT2SWQCP74U)
-
-You can invite me a beer if you want ;) 
-
 ## Description
 
 This is a completely funcional Docker image with flood, rutorrent, rtorrent, libtorrent and a lot of plugins 
 for rutorrent, like autodl-irssi, filemanager, fileshare and other useful ones.
-
-Based on Alpine Linux, which provides a very small size. 
 
 Includes plugins: logoff fileshare filemanager pausewebui mobile ratiocolor force_save_session showip ...
 
@@ -22,10 +14,6 @@ Also installed and selected by default this awesome theme: club-QuickBox
 Also includes MaterialDesign theme as an option.
 
 You need to run pyrocore commands with user "abc", which is who runs rtorrent, so use "su - abc" after connecting container before using pyrocore commands. If you already have torrents in your rtorrent docker instance, you have to add extra information before using pyrocore, check here: http://pyrocore.readthedocs.io/en/latest/setup.html in the "Adding Missing Data to Your rTorrent Session" topic.
-
-rTelegram is added, that will allow you to control your rtorrent instance from Telegram client.
-
-Tested and working on Synology and QNAP, but should work on any x86_64 devices.
 
 ## Instructions
 
