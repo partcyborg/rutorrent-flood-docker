@@ -1,4 +1,4 @@
-# rutorrent-flood-docker
+# rutorrent-autodl-docker
 
 A repository for creating a docker container including rtorrent with rutorrent and flood interfaces.
 
@@ -11,9 +11,7 @@ Includes plugins: logoff fileshare filemanager pausewebui mobile ratiocolor forc
 
 Also installed and selected by default this awesome theme: club-QuickBox
 
-Also includes MaterialDesign theme as an option.
-
-You need to run pyrocore commands with user "abc", which is who runs rtorrent, so use "su - abc" after connecting container before using pyrocore commands. If you already have torrents in your rtorrent docker instance, you have to add extra information before using pyrocore, check here: http://pyrocore.readthedocs.io/en/latest/setup.html in the "Adding Missing Data to Your rTorrent Session" topic.
+Also includes numerous ruTorrent themes.
 
 ## Instructions
 
@@ -37,53 +35,14 @@ In order to change rutorrent web access password execute this inside container:
 For rtorrent 0.9.8 version:
  
  ```bash
-docker run -d --name=rutorrent-flood \
--v /share/Container/rutorrent-flood/config:/config \
--v /share/Container/rutorrent-flood/downloads:/downloads \
+docker run -d --name=rutorrent-autodl \
+-v /share/Container/rutorrent-autodl/config:/config \
+-v /share/Container/rutorrent-autodl/downloads:/downloads \
 -e PGID=0 -e PUID=0 -e TZ=Europe/Madrid \
 -p 9443:443 \
 -p 3000:3000 \
 -p 51415-51415:51415-51415 \
-romancin/rutorrent-flood:latest
-```
-
-For rtorrent 0.9.7 version:
- 
- ```bash
-docker run -d --name=rutorrent-flood \
--v /share/Container/rutorrent-flood/config:/config \
--v /share/Container/rutorrent-flood/downloads:/downloads \
--e PGID=0 -e PUID=0 -e TZ=Europe/Madrid \
--p 9443:443 \
--p 3000:3000 \
--p 51415-51415:51415-51415 \
-romancin/rutorrent-flood:0.9.7
-```
-
-For rtorrent 0.9.6 version:
-
-```bash
-docker run -d --name=rutorrent-flood \
--v /share/Container/rutorrent-flood/config:/config \
--v /share/Container/rutorrent-flood/downloads:/downloads \
--e PGID=0 -e PUID=0 -e TZ=Europe/Madrid \
--p 9443:443 \
--p 3000:3000 \
--p 51415-51415:51415-51415 \
-romancin/rutorrent-flood:0.9.6
-```
-
-For rtorrent 0.9.4 version:
-
-```bash
-docker run -d --name=rutorrent-flood \
--v /share/Container/rutorrent-flood/config:/config \
--v /share/Container/rutorrent-flood/downloads:/downloads \
--e PGID=0 -e PUID=0 -e TZ=Europe/Madrid \
--p 9443:443 \
--p 3000:3000 \
--p 51415-51415:51415-51415 \
-romancin/rutorrent-flood:0.9.4
+partcyborg/rutorrent-autodl:latest
 ```
 
 Remember editing `/config/rtorrent/rtorrent.rc` with your own settings, especially your watch subfolder configuration.
