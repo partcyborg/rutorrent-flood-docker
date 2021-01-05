@@ -6,9 +6,9 @@ ARG BUILD_DATE
 ARG VERSION
 LABEL build_version="Version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 
-# package version
-ARG MEDIAINF_VER="19.07"
-ARG GEOIP_VER="1.1.1"
+# package versions
+ARG MEDIAINF_VER="20.08"
+ARG RUTORRENT_VER="v3.10"
 
 # set env
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
@@ -16,10 +16,9 @@ ENV CONTEXT_PATH=/
 ENV CREATE_SUBDIR_BY_TRACKERS="no"
 
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
-LABEL maintainer="sparklyballs, aptalca"
+LABEL maintainer="partcyborg"
 
-RUN export NB_CORES=4 && \
- export DEBIAN_FRONTEND=noninteractive && \
+RUN export DEBIAN_FRONTEND=noninteractive && \
  echo "**** install packages ****" && \
  apt-get update && \
  apt-get install -y \
@@ -107,7 +106,7 @@ RUN export NB_CORES=4 && \
 mkdir -p \
         /usr/share/webapps/rutorrent \
         /defaults/rutorrent-conf && \
- git clone https://github.com/Novik/ruTorrent.git \
+ git clone -b ${RUTORRENT_VER} https://github.com/Novik/ruTorrent.git \
         /usr/share/webapps/rutorrent/ && \
  mv /usr/share/webapps/rutorrent/conf/* \
         /defaults/rutorrent-conf/ && \
@@ -115,34 +114,25 @@ mkdir -p \
         /defaults/rutorrent-conf/users && \
  pip3 install CfScrape \
               cloudscraper && \
-# install webui extras
-# QuickBox Theme
+# ruTorrent themes
 git clone https://github.com/QuickBox/club-QuickBox /usr/share/webapps/rutorrent/plugins/theme/themes/club-QuickBox && \
 git clone https://github.com/Phlooo/ruTorrent-MaterialDesign /usr/share/webapps/rutorrent/plugins/theme/themes/MaterialDesign && \
+git clone https://github.com/artyuum/3rd-party-ruTorrent-Themes /tmp/rutorrent-themes && \
+for theme in Agent34 Agent46 club-QuickBox FlatUI_Dark FlatUI_Light FlatUI_Material OblivionBlue; do \
+   mv /tmp/rutorrent-themes/${theme} /usr/share/webapps/rutorrent/plugins/theme/themes; \
+done && \
+rm -rf /tmp/rutorrent-themes && \
 # ruTorrent plugins
 cd /usr/share/webapps/rutorrent/plugins/ && \
-git clone https://github.com/orobardet/rutorrent-force_save_session force_save_session && \
 git clone https://github.com/AceP1983/ruTorrent-plugins  && \
 mv ruTorrent-plugins/* . && \
 rm -rf ruTorrent-plugins && \
-git clone https://github.com/nelu/rutorrent-thirdparty-plugins.git && \
-mv rutorrent-thirdparty-plugins/* . && \
-rm -rf rutorrent-thirdparty-plugins && \
-cd /usr/share/webapps/rutorrent/ && \
-chmod 755 plugins/filemanager/scripts/* && \
-rm -rf plugins/fileupload && \
-cd /tmp && \
-git clone https://github.com/mcrapet/plowshare.git && \
-cd plowshare/ && \
-make install && \
-cd .. && \
-rm -rf plowshare* && \
-cd /usr/share/webapps/rutorrent/plugins/ && \
-git clone https://github.com/Gyran/rutorrent-pausewebui pausewebui && \
+git clone https://github.com/nelu/rutorrent-filemanager filemanager && \
+git clone https://github.com/nelu/rutorrent-filemanager-share filemanager-share && \
+chmod 755 filemanager/scripts/* && \
 git clone https://github.com/Gyran/rutorrent-ratiocolor ratiocolor && \
-sed -i 's/changeWhat = "cell-background";/changeWhat = "font";/g' /usr/share/webapps/rutorrent/plugins/ratiocolor/init.js && \
-git clone https://github.com/Gyran/rutorrent-instantsearch instantsearch && \
-git clone https://github.com/xombiemp/rutorrentMobile && \
+sed -i 's/changeWhat = "cell-background";/changeWhat = "font";/g' ratiocolor/init.js && \
+git clone https://github.com/xombiemp/rutorrentMobile mobile && \
 git clone https://github.com/dioltas/AddZip && \
 perl -MCPAN -e 'my $c = "CPAN::HandleConfig"; $c->load(doit => 1, autoconfig => 1); $c->edit(prerequisites_policy => "follow"); $c->edit(build_requires_install_policy => "yes"); $c->commit' && \
 cd /tmp && \
@@ -180,9 +170,8 @@ rm -rf mediainfo && \
 # compile and install rtelegram
 GOPATH=/usr go get -u github.com/pyed/rtelegram && \
 # Install flood
-mkdir /usr/flood && \
-cd /usr/flood && \
-git clone https://github.com/jfurrow/flood . && \
+cd /usr && \
+git clone https://github.com/jfurrow/flood  && \
 cp config.template.js config.js && \
 npm install && \
 npm cache clean --force && \
